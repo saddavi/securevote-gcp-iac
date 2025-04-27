@@ -1,4 +1,4 @@
-# filepath: /Users/talha/securevote-gcp-iac/terraform/main.tf
+# terraform/main.tf
 terraform {
   required_providers {
     google = {
@@ -12,4 +12,24 @@ terraform {
 provider "google" {
   project = var.project_id
   region  = var.region
+}
+
+# Enable required APIs for serverless architecture
+resource "google_project_service" "required_apis" {
+  for_each = toset([
+    "cloudresourcemanager.googleapis.com",
+    "run.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "sqladmin.googleapis.com", 
+    "secretmanager.googleapis.com",
+    "storage.googleapis.com",
+    "iap.googleapis.com",
+    "firebase.googleapis.com"
+  ])
+  
+  project = var.project_id
+  service = each.key
+  
+  disable_dependent_services = true
 }

@@ -1,8 +1,22 @@
-# filepath: /Users/talha/securevote-gcp-iac/terraform/iam.tf
-# Grants the specified service account the Editor role on the project.
-# WARNING: 'roles/editor' is broad. Refine to least privilege later.
-resource "google_project_iam_member" "terraform_editor" {
+# terraform/iam.tf
+# Grant the Cloud Run service account access to Cloud SQL
+resource "google_project_iam_member" "cloud_run_sql_client" {
   project = var.project_id
-  role    = "roles/editor" 
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.cloud_run_service_account.email}"
+}
+
+# Grant minimal permissions to the terraform service account
+resource "google_project_iam_member" "terraform_permissions" {
+  for_each = toset([
+    "roles/cloudsql.admin",
+    "roles/run.admin",
+    "storage.admin",
+    "roles/compute.networkAdmin",
+    "roles/iam.serviceAccountUser"
+  ])
+  
+  project = var.project_id
+  role    = each.key
   member  = "serviceAccount:${var.terraform_service_account_email}"
 }

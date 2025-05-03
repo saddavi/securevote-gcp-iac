@@ -25,7 +25,9 @@ resource "google_project_service" "required_apis" {
     "secretmanager.googleapis.com",
     "storage.googleapis.com",
     "iap.googleapis.com",
-    "firebase.googleapis.com"
+    "firebase.googleapis.com",
+    "vpcaccess.googleapis.com",    # For Serverless VPC Access connectors
+    "servicenetworking.googleapis.com" # For private VPC connections to Cloud SQL
   ])
   
   project = var.project_id

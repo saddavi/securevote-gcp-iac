@@ -17,7 +17,17 @@ This project implements a modern, serverless architecture on GCP with:
 The infrastructure maintains complete separation between:
 
 - **Development Environment**: For testing and staging
+
+  - Dedicated VPC network (`vpc-dev`)
+  - Isolated subnet with its own CIDR range
+  - Environment-specific firewall rules
+  - Separate Cloud Run instances and database access
+
 - **Production Environment**: For the live system
+  - Completely isolated VPC network (`vpc-prod`)
+  - Production-specific subnet configuration
+  - Stricter firewall rules for production traffic
+  - Dedicated service accounts with minimal permissions
 
 ## Current Infrastructure
 
@@ -84,7 +94,23 @@ securevote-gcp-iac/
 
 ## Security Features
 
-- Environment isolation with separate VPC networks
-- Internal-only database access
-- IAM-based authentication for services
-- Principle of least privilege for service accounts
+- **Network Segmentation**:
+
+  - Separate VPC networks for development and production
+  - Private subnets with controlled ingress/egress
+  - Internal-only database access via private IP
+
+- **Firewall Protection**:
+  - Granular firewall rules allowing only necessary traffic
+  - TCP/UDP/ICMP traffic controlled within VPC subnets
+  - Limited serverless-to-VPC communication (ports 443, 8080, 5432)
+- **Identity and Access Management**:
+
+  - Principle of least privilege for all service accounts
+  - Environment-specific IAM roles and permissions
+  - IAM-based authentication between services
+
+- **Data Protection**:
+  - Cloud SQL with private VPC access only
+  - Encrypted connections for all service communications
+  - Isolated storage buckets with appropriate ACLs

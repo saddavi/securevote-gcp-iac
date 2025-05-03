@@ -11,7 +11,7 @@ resource "google_project_iam_member" "terraform_permissions" {
   for_each = toset([
     "roles/cloudsql.admin",
     "roles/run.admin",
-    "storage.admin",
+    "roles/storage.admin",
     "roles/compute.networkAdmin",
     "roles/iam.serviceAccountUser"
   ])

@@ -7,7 +7,6 @@ resource "google_sql_database_instance" "votes_db_dev" {
   
   settings {
     tier = "db-f1-micro" # Smallest tier for development
-    edition = "STANDARD" # Explicitly set to Standard edition instead of Enterprise
     
     ip_configuration {
       ipv4_enabled    = false
@@ -32,7 +31,6 @@ resource "google_sql_database_instance" "votes_db_prod" {
   
   settings {
     tier = "db-g1-small" # Slightly larger for production
-    edition = "STANDARD" # Explicitly set to Standard edition instead of Enterprise
     
     ip_configuration {
       ipv4_enabled    = false

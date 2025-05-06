@@ -7,6 +7,7 @@ resource "google_sql_database_instance" "votes_db_dev" {
   
   settings {
     tier = "db-f1-micro" # Smallest tier for development
+    activation_policy = "ALWAYS" # Set to NEVER to stop instance
     
     ip_configuration {
       ipv4_enabled    = false
@@ -31,6 +32,7 @@ resource "google_sql_database_instance" "votes_db_prod" {
   
   settings {
     tier = "db-g1-small" # Slightly larger for production
+    activation_policy = "ALWAYS" # Set to NEVER to stop instance
     
     ip_configuration {
       ipv4_enabled    = false
@@ -50,12 +52,14 @@ resource "google_sql_database_instance" "votes_db_prod" {
 
 # Development Database
 resource "google_sql_database" "votes_db_dev" {
-  name     = "votes"
-  instance = google_sql_database_instance.votes_db_dev.name
+  name            = "votes"
+  instance        = google_sql_database_instance.votes_db_dev.name
+  deletion_policy = "ABANDON" # Don't delete the database when Terraform resource is removed
 }
 
 # Production Database
 resource "google_sql_database" "votes_db_prod" {
-  name     = "votes"
-  instance = google_sql_database_instance.votes_db_prod.name
+  name            = "votes"
+  instance        = google_sql_database_instance.votes_db_prod.name
+  deletion_policy = "ABANDON" # Don't delete the database when Terraform resource is removed
 }

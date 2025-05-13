@@ -114,3 +114,26 @@ securevote-gcp-iac/
   - Cloud SQL with private VPC access only
   - Encrypted connections for all service communications
   - Isolated storage buckets with appropriate ACLs
+
+## Resource Management & Cost Control
+
+To minimize costs during development, the following scripts are included and ready to use:
+
+- `scripts/stop_all_dev_resources.sh`: Stops Cloud SQL, scales Cloud Run to zero, and (optionally) deletes VPC connectors.
+- `scripts/start_all_dev_resources.sh`: Starts Cloud SQL and provides guidance for recreating VPC connectors and Cloud Run min-instances.
+
+> Note: Cloud SQL and Cloud Storage will still incur storage costs even when stopped.
+
+## Planned Improvements
+
+With the core infrastructure and cost management scripts in place, the next planned improvements are:
+
+- **Implement CI/CD:** Automate Terraform and application deployments using GitHub Actions or another pipeline.
+- **Security & Compliance:**
+  - Integrate Secret Manager for sensitive credentials
+  - Add audit logging for user actions
+  - Enhance IAM controls for more granular access
+
+---
+
+If you are a hiring manager or recruiter, this project demonstrates my ability to design, automate, and manage secure, cost-effective, and scalable cloud infrastructure on GCP. I am actively seeking a Cloud Engineer role in Qatar and am eager to contribute my skills to your team.

@@ -1,0 +1,45 @@
+name: 'Terraform CI/CD'
+
+on:
+  push:
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
+
+jobs:
+  terraform:
+    name: 'Terraform Format, Validate & Plan'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -no-color -input=false
+
+      # To enable GCP authentication for remote plan/apply, add these steps and set up the GCP_CREDENTIALS secret:
+      # - name: Authenticate to GCP
+      #   run: echo "${{ secrets.GCP_CREDENTIALS }}" > ${{ github.workspace }}/gcp-creds.json
+      # - name: Set GOOGLE_APPLICATION_CREDENTIALS
+      #   run: echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/gcp-creds.json" >> $GITHUB_ENV

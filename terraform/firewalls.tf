@@ -5,7 +5,7 @@ resource "google_compute_firewall" "vpc_dev_allow_internal" {
   name        = "vpc-dev-allow-internal"
   network     = google_compute_network.vpc_dev.name
   description = "Allow internal traffic between resources in the subnet"
-  
+
   allow {
     protocol = "tcp"
     ports    = ["0-65535"]
@@ -17,7 +17,7 @@ resource "google_compute_firewall" "vpc_dev_allow_internal" {
   allow {
     protocol = "icmp"
   }
-  
+
   source_ranges = [google_compute_subnetwork.subnet_dev.ip_cidr_range]
 }
 
@@ -27,7 +27,7 @@ resource "google_compute_firewall" "vpc_prod_allow_internal" {
   name        = "vpc-prod-allow-internal"
   network     = google_compute_network.vpc_prod.name
   description = "Allow internal traffic between resources in the prod subnet"
-  
+
   allow {
     protocol = "tcp"
     ports    = ["0-65535"]
@@ -39,7 +39,7 @@ resource "google_compute_firewall" "vpc_prod_allow_internal" {
   allow {
     protocol = "icmp"
   }
-  
+
   source_ranges = [google_compute_subnetwork.subnet_prod.ip_cidr_range]
 }
 
@@ -49,12 +49,12 @@ resource "google_compute_firewall" "vpc_dev_allow_serverless_access" {
   name        = "vpc-dev-allow-serverless"
   network     = google_compute_network.vpc_dev.name
   description = "Allow serverless services to access VPC resources"
-  
+
   allow {
     protocol = "tcp"
-    ports    = ["443", "8080", "5432"]  # HTTPS, default Cloud Run, PostgreSQL
+    ports    = ["443", "8080", "5432"] # HTTPS, default Cloud Run, PostgreSQL
   }
-  
+
   source_ranges = ["35.199.224.0/19"] # Google's serverless services range
 }
 
@@ -64,11 +64,11 @@ resource "google_compute_firewall" "vpc_prod_allow_serverless_access" {
   name        = "vpc-prod-allow-serverless"
   network     = google_compute_network.vpc_prod.name
   description = "Allow serverless services to access VPC resources"
-  
+
   allow {
     protocol = "tcp"
-    ports    = ["443", "8080", "5432"]  # HTTPS, default Cloud Run, PostgreSQL
+    ports    = ["443", "8080", "5432"] # HTTPS, default Cloud Run, PostgreSQL
   }
-  
+
   source_ranges = ["35.199.224.0/19"] # Google's serverless services range
 }

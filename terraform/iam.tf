@@ -15,7 +15,7 @@ resource "google_project_iam_member" "terraform_permissions" {
     "roles/compute.networkAdmin",
     "roles/iam.serviceAccountUser"
   ])
-  
+
   project = var.project_id
   role    = each.key
   member  = "serviceAccount:${var.terraform_service_account_email}"

@@ -29,24 +29,15 @@ jobs:
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
-      # Debugging step - Check beginning of credentials file
-      - name: Debug Credentials
-        run: |
-          echo "First few characters of GCP_CREDENTIALS:"
-          echo "${{ secrets.GCP_CREDENTIALS }}" | head -c 20
-          echo ""
-          echo "Character count of GCP_CREDENTIALS:"
-          echo "${{ secrets.GCP_CREDENTIALS }}" | wc -c
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
 
-      - name: Authenticate to GCP
-        run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" > gcp-creds.json
-          cat gcp-creds.json | head -1
-          echo "File created with size:"
-          stat gcp-creds.json
-
-      - name: Set GOOGLE_APPLICATION_CREDENTIALS
-        run: echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/gcp-creds.json" >> $GITHUB_ENV
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Terraform Init
         run: terraform init

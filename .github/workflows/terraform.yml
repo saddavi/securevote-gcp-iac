@@ -39,6 +39,12 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Extract Service Account Email
+        id: extract-email
+        run: |
+          echo "service_account_email=$(echo '${{ secrets.GCP_CREDENTIALS }}' | jq -r '.client_email')" >> $GITHUB_OUTPUT
+          echo "project_id=$(echo '${{ secrets.GCP_CREDENTIALS }}' | jq -r '.project_id')" >> $GITHUB_OUTPUT
+
       - name: Terraform Init
         run: terraform init
 
@@ -46,4 +52,7 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -no-color -input=false
+        run: |
+          terraform plan -no-color -input=false \
+            -var="project_id=${{ steps.extract-email.outputs.project_id }}" \
+            -var="terraform_service_account_email=${{ steps.extract-email.outputs.service_account_email }}"

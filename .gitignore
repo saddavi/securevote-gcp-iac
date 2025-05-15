@@ -23,14 +23,14 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Exclude any local scripts including database control scripts
+scripts/db_control.sh
+
 # MacOS system files
 .DS_Store
 
-# Database control and utility scripts
+# Database control scripts
 scripts/
-terraform/Stop\ and\ start\ DBs
+terraform/Stop and start DBs
 troubleshoot.sh
-
-# Terraform plan files
-terraform/tfplan
 

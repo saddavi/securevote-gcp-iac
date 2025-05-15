@@ -134,6 +134,44 @@ With the core infrastructure and cost management scripts in place, the next plan
   - Add audit logging for user actions
   - Enhance IAM controls for more granular access
 
+## CI/CD Implementation & Learning Goals
+
+This project is also a learning journey to understand and implement modern DevOps practices, specifically CI/CD for Infrastructure as Code (IaC) on Google Cloud Platform.
+
+### What is CI/CD?
+
+- **Continuous Integration (CI):** Automatically checks and tests infrastructure code changes (like Terraform) on every commit or pull request.
+- **Continuous Deployment/Delivery (CD):** Automates the process of applying validated infrastructure changes to the cloud environment.
+
+### Why CI/CD for IaC?
+
+- Ensures all infrastructure changes are tested, reviewed, and deployed consistently.
+- Reduces manual errors and increases deployment speed.
+- Provides audit trails and easy rollback options.
+
+### Tools Used
+
+- **GitHub Actions:** For automating CI/CD workflows.
+- **Terraform:** For defining and provisioning cloud infrastructure.
+- **Google Cloud Service Account:** For secure, automated access to GCP.
+
+### Planned Workflow
+
+1. On every pull request or push:
+   - Run Terraform formatting, validation, and planning.
+   - Optionally require approval before applying changes.
+2. On merge to main (or manual trigger):
+   - Apply infrastructure changes to GCP.
+
+### Learning Objectives
+
+- Understand how to automate infrastructure changes safely.
+- Learn to use GitHub Actions for cloud automation.
+- Practice secure credential management for automation.
+- Gain hands-on experience with real-world DevOps workflows.
+
+> As I progress, I will document key learnings and improvements here.
+
 ---
 
 If you are a hiring manager or recruiter, this project demonstrates my ability to design, automate, and manage secure, cost-effective, and scalable cloud infrastructure on GCP. I am actively seeking a Cloud Engineer role in Qatar and am eager to contribute my skills to your team.

@@ -29,14 +29,30 @@ jobs:
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
-      # To enable GCP authentication for remote plan/apply, add these steps and set up the GCP_CREDENTIALS secret:
+      # Debugging step - Check beginning of credentials file
+      - name: Debug Credentials
+        run: |
+          echo "First few characters of GCP_CREDENTIALS:"
+          echo "${{ secrets.GCP_CREDENTIALS }}" | head -c 20
+          echo ""
+          echo "Character count of GCP_CREDENTIALS:"
+          echo "${{ secrets.GCP_CREDENTIALS }}" | wc -c
+
       - name: Authenticate to GCP
-        run: echo "${{ secrets.GCP_CREDENTIALS }}" > ${{ github.workspace }}/gcp-creds.json
+        run: |
+          echo "${{ secrets.GCP_CREDENTIALS }}" > gcp-creds.json
+          cat gcp-creds.json | head -1
+          echo "File created with size:"
+          stat gcp-creds.json
+
       - name: Set GOOGLE_APPLICATION_CREDENTIALS
-        run: echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/gcp-creds.json" >> $GITHUB_ENV
+        run: echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/gcp-creds.json" >> $GITHUB_ENV
+
       - name: Terraform Init
         run: terraform init
+
       - name: Terraform Validate
         run: terraform validate
+
       - name: Terraform Plan
         run: terraform plan -no-color -input=false

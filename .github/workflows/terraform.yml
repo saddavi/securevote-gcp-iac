@@ -5,6 +5,8 @@ on:
     paths:
       - "terraform/**"
       - ".github/workflows/terraform.yml"
+    branches:
+      - main
   pull_request:
     paths:
       - "terraform/**"
@@ -51,8 +53,86 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform Plan
+      - name: Terraform Plan Development
+        if: github.event_name == 'pull_request'
+        id: plan-dev
         run: |
           terraform plan -no-color -input=false \
+            -var-file="dev.tfvars" \
             -var="project_id=${{ steps.extract-email.outputs.project_id }}" \
-            -var="terraform_service_account_email=${{ steps.extract-email.outputs.service_account_email }}"
+            -var="terraform_service_account_email=${{ steps.extract-email.outputs.service_account_email }}" \
+            -out=tfplan-dev
+
+      - name: Terraform Plan Production
+        if: github.ref == 'refs/heads/main'
+        id: plan-prod
+        run: |
+          terraform plan -no-color -input=false \
+            -var-file="prod.tfvars" \
+            -var="project_id=${{ steps.extract-email.outputs.project_id }}" \
+            -var="terraform_service_account_email=${{ steps.extract-email.outputs.service_account_email }}" \
+            -out=tfplan-prod
+
+      - name: Upload Development Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan-dev
+          path: terraform/tfplan-dev
+          retention-days: 5
+
+      - name: Upload Production Plan
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan-prod
+          path: terraform/tfplan-prod
+          retention-days: 5
+
+  deploy:
+    name: "Deploy Infrastructure"
+    needs: terraform
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: 
+      name: production
+      url: https://console.cloud.google.com/home/dashboard?project=${{ steps.extract-email.outputs.project_id }}
+    
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Extract Service Account Email
+        id: extract-email
+        run: |
+          echo "service_account_email=$(echo '${{ secrets.GCP_CREDENTIALS }}' | jq -r '.client_email')" >> $GITHUB_OUTPUT
+          echo "project_id=$(echo '${{ secrets.GCP_CREDENTIALS }}' | jq -r '.project_id')" >> $GITHUB_OUTPUT
+
+      - name: Download Production Plan
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-plan-prod
+          path: terraform
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply Production
+        run: terraform apply -auto-approve "tfplan-prod"

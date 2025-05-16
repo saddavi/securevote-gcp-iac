@@ -134,6 +134,47 @@ With the core infrastructure and cost management scripts in place, the next plan
   - Add audit logging for user actions
   - Enhance IAM controls for more granular access
 
+## CI/CD Implementation Status
+
+The CI/CD pipeline has been successfully implemented using GitHub Actions. The current workflow:
+
+### Implemented Features
+
+1. **Automated Checks on Every Push/PR**:
+   - Terraform format verification
+   - Terraform code validation
+   - Infrastructure plan generation
+   - Full GCP authentication
+
+2. **Security**:
+   - Secure GCP credentials management using GitHub Secrets
+   - Service account with least-privilege access
+   - Automated variable extraction from credentials
+
+### Current Workflow Details
+
+The GitHub Actions workflow triggers automatically when:
+- Changes are pushed to the `terraform/` directory
+- Workflow file is modified
+
+The workflow performs:
+1. Code checkout and Terraform setup
+2. GCP authentication using service account
+3. Terraform format checking
+4. Terraform initialization and validation
+5. Terraform plan generation
+
+### Required Permissions
+
+The service account has been configured with necessary roles:
+- Cloud SQL Admin
+- Storage Admin
+- Compute Network Admin
+- Cloud Run Admin
+- VPC Access Admin
+- IAM Admin
+- Service Account User
+
 ## CI/CD Implementation & Learning Goals
 
 This project is also a learning journey to understand and implement modern DevOps practices, specifically CI/CD for Infrastructure as Code (IaC) on Google Cloud Platform.

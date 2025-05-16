@@ -94,9 +94,9 @@ jobs:
     needs: terraform
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: 
+    environment:
       name: production
-    
+
     defaults:
       run:
         working-directory: terraform

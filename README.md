@@ -136,44 +136,69 @@ With the core infrastructure and cost management scripts in place, the next plan
 
 ## CI/CD Implementation Status
 
-The CI/CD pipeline has been successfully implemented using GitHub Actions. The current workflow:
+The CI/CD pipeline has been fully implemented using GitHub Actions with both validation and deployment capabilities:
 
 ### Implemented Features
 
 1. **Automated Checks on Every Push/PR**:
+
    - Terraform format verification
    - Terraform code validation
    - Infrastructure plan generation
    - Full GCP authentication
 
 2. **Security**:
+
    - Secure GCP credentials management using GitHub Secrets
    - Service account with least-privilege access
-   - Automated variable extraction from credentials
+   - Protected deployment to production environment
+   - Required manual approvals for infrastructure changes
 
-### Current Workflow Details
+3. **Deployment Automation**:
+   - Automated Terraform apply on merge to main
+   - Production environment protection with required approvals
+   - Direct link to GCP console for deployed resources
+   - Artifact retention for terraform plans
 
-The GitHub Actions workflow triggers automatically when:
-- Changes are pushed to the `terraform/` directory
-- Workflow file is modified
+### Workflow Details
 
-The workflow performs:
-1. Code checkout and Terraform setup
-2. GCP authentication using service account
-3. Terraform format checking
-4. Terraform initialization and validation
-5. Terraform plan generation
+The GitHub Actions workflow triggers on:
+
+- Pull requests targeting any branch
+- Direct pushes to the main branch
+- Changes in `terraform/` directory or workflow file
+
+The workflow consists of two main jobs:
+
+1. **Terraform Validation (runs on all PRs and pushes)**:
+
+   - Validates code formatting and configuration
+   - Generates and stores terraform plan as artifact
+   - Provides plan output for review
+
+2. **Infrastructure Deployment (runs only on main branch)**:
+   - Requires manual approval through GitHub environments
+   - Executes terraform apply with approved changes
+   - Uses protected production environment
+   - Provides direct link to GCP dashboard
 
 ### Required Permissions
 
-The service account has been configured with necessary roles:
-- Cloud SQL Admin
-- Storage Admin
-- Compute Network Admin
-- Cloud Run Admin
-- VPC Access Admin
-- IAM Admin
-- Service Account User
+The service account has been configured with necessary roles in phases:
+
+1. **Initial Base Roles**:
+
+   - Cloud SQL Admin
+   - Storage Admin
+   - Compute Network Admin
+   - Cloud Run Admin
+   - Service Account User
+
+2. **Extended Access**:
+   - Project IAM Admin (for managing IAM policies)
+   - VPC Access Admin (for managing VPC connectors)
+
+This progressive role assignment follows the principle of least privilege while ensuring the service account has all necessary permissions for the CI/CD pipeline to function properly.
 
 ## CI/CD Implementation & Learning Goals
 

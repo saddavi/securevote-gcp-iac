@@ -9,7 +9,7 @@ This project implements a modern, serverless architecture on GCP with:
 - **Frontend**: Static assets hosted on Cloud Storage
 - **Backend API**: Cloud Run services for scalable, containerized API
 - **Database**: Cloud SQL with private VPC access
-- **Networking**: VPC networks with serverless VPC access connectors
+- **Networking**: VPC networks with serverless VPC access connectors (optional for dev)
 - **Security**: IAM-based authentication and secure firewall rules
 
 ### Environment Isolation
@@ -18,30 +18,34 @@ The infrastructure maintains complete separation between:
 
 - **Development Environment**: For testing and staging
 
-  - Dedicated VPC network (`vpc-dev`)
-  - Isolated subnet with its own CIDR range
-  - Environment-specific firewall rules
-  - Separate Cloud Run instances and database access
+  - Optional VPC network for cost savings
+  - Environment-specific configurations
+  - Cost-optimized resource settings
+  - Start/stop scripts for resource management
 
 - **Production Environment**: For the live system
-  - Completely isolated VPC network (`vpc-prod`)
-  - Production-specific subnet configuration
-  - Stricter firewall rules for production traffic
+  - Full VPC network implementation
+  - Production-grade security measures
+  - High-availability configurations
   - Dedicated service accounts with minimal permissions
 
-## Current Infrastructure
+## Cost-Optimized Infrastructure
 
-- **Development VPC Network**
-  - Custom VPC network (`vpc-dev`)
-  - Regional subnet in `us-central1`
-  - Basic firewall rules:
-    - Internal communication within VPC
-    - SSH access controls
-- **Serverless Components**
-  - Cloud Run services for API
-  - Cloud Storage for frontend hosting
-  - Cloud SQL for database
-  - Serverless VPC Access connectors
+Estimated monthly costs for development:
+
+- Cloud Run: $0-1 (mostly free tier)
+- Cloud Storage: $0-1
+- Cloud SQL (when needed): $7-9
+- VPC (optional): $0-5
+  Total Expected: Under $10/month during development
+
+### Cost Management Features
+
+- Optional VPC components for development
+- Minimal instance sizes
+- Start/stop scripts for expensive resources
+- Lifecycle policies for storage
+- Free tier utilization
 
 ## Prerequisites
 
@@ -49,54 +53,70 @@ The infrastructure maintains complete separation between:
 - Terraform >= 1.3
 - Access to GCP Project: `securevote-iac`
 - Service account with necessary permissions
-
-## Getting Started
-
-1. Clone the repository
-2. Initialize Terraform:
-
-```bash
-cd terraform
-terraform init
-```
-
-3. Plan and apply changes:
-
-```bash
-terraform plan -var="project_id=securevote-iac" -var="terraform_service_account_email=YOUR_SERVICE_ACCOUNT" -out=tfplan
-terraform apply tfplan
-```
+- GitHub CLI (gh) for PR management
 
 ## Project Structure
 
 ```
 securevote-gcp-iac/
 ├── terraform/
-│   ├── backend.tf         # GCS backend configuration
-│   ├── variables.tf       # Input variables
-│   ├── main.tf            # Provider configuration and APIs
-│   ├── networks.tf        # VPC and subnet definitions
-│   ├── firewalls.tf       # Firewall rules
-│   ├── iam.tf             # IAM roles and bindings
-│   ├── cloud_run.tf       # Serverless API services
-│   ├── database.tf        # Cloud SQL configuration
-│   ├── storage.tf         # Frontend storage configuration
-│   └── outputs.tf         # Output values
+│   ├── modules/
+│   │   ├── cloud-run/      # Cloud Run service configuration
+│   │   ├── database/       # Cloud SQL database setup
+│   │   ├── iam/           # IAM roles and permissions
+│   │   ├── networking/    # VPC and network configuration
+│   │   └── storage/       # Storage buckets and configurations
+│   ├── environments/
+│   │   ├── dev/          # Development environment
+│   │   └── prod/         # Production environment
+│   └── backend.tf        # GCS backend configuration
+├── docs/
+│   └── session_changes_may17.md  # Detailed change documentation
+├── scripts/
+│   ├── db_control.sh
+│   ├── start_all_dev_resources.sh
+│   └── stop_all_dev_resources.sh
 └── README.md
 ```
 
-## Serverless Components
+## Getting Started
 
-- **Cloud Run**: Containerized microservices that scale automatically
-- **Cloud Storage**: Hosting static frontend assets
-- **Cloud SQL**: Managed PostgreSQL database
-- **Serverless VPC Access**: Connecting serverless services to VPC resources
+1. Clone the repository:
+
+```bash
+git clone https://github.com/saddavi/securevote-gcp-iac.git
+cd securevote-gcp-iac
+```
+
+2. Initialize Terraform for development:
+
+```bash
+cd terraform/environments/dev
+terraform init
+```
+
+3. Plan and apply changes:
+
+```bash
+terraform plan -out=tfplan
+terraform apply tfplan
+```
+
+4. Managing development resources:
+
+```bash
+# Start resources
+./scripts/start_all_dev_resources.sh
+
+# Stop resources when not in use
+./scripts/stop_all_dev_resources.sh
+```
 
 ## Security Features
 
 - **Network Segmentation**:
 
-  - Separate VPC networks for development and production
+  - Optional VPC networks for cost-effective development
   - Private subnets with controlled ingress/egress
   - Internal-only database access via private IP
 
@@ -136,108 +156,96 @@ With the core infrastructure and cost management scripts in place, the next plan
 
 ## CI/CD Implementation Status
 
-The CI/CD pipeline has been fully implemented using GitHub Actions with both validation and deployment capabilities:
+The CI/CD pipeline has been implemented using GitHub Actions with both validation and deployment capabilities:
 
-### Implemented Features
+### Latest Improvements
 
-1. **Automated Checks on Every Push/PR**:
+1. **Environment-Specific Deployments**:
 
-   - Terraform format verification
-   - Terraform code validation
-   - Infrastructure plan generation
-   - Full GCP authentication
+   - Separate workflows for dev/prod
+   - Environment-specific variable handling
+   - Cost-optimized development deployments
 
-2. **Security**:
+2. **Enhanced Security**:
 
-   - Secure GCP credentials management using GitHub Secrets
-   - Service account with least-privilege access
-   - Protected deployment to production environment
-   - Required manual approvals for infrastructure changes
+   - Secure secret management
+   - Service account key rotation
+   - Least privilege access implementation
 
-3. **Deployment Automation**:
-   - Automated Terraform apply on merge to main
-   - Production environment protection with required approvals
-   - Direct link to GCP console for deployed resources
-   - Artifact retention for terraform plans
+3. **Validation Improvements**:
+   - Added terraform fmt checks
+   - Implemented cost estimation
+   - Resource validation steps
 
 ### Workflow Details
 
 The GitHub Actions workflow triggers on:
 
 - Pull requests targeting any branch
-- Direct pushes to the main branch
-- Changes in `terraform/` directory or workflow file
+- Direct pushes to feature/\* branches
+- Changes in `terraform/` directory
 
-The workflow consists of two main jobs:
+The workflow includes:
 
-1. **Terraform Validation (runs on all PRs and pushes)**:
+1. **Validation (all PRs)**:
 
-   - Validates code formatting and configuration
-   - Generates and stores terraform plan as artifact
-   - Provides plan output for review
+   - Code formatting verification
+   - Infrastructure validation
+   - Cost estimation review
 
-2. **Infrastructure Deployment (runs only on main branch)**:
-   - Requires manual approval through GitHub environments
-   - Executes terraform apply with approved changes
-   - Uses protected production environment
-   - Provides direct link to GCP dashboard
+2. **Deployment (with approvals)**:
+   - Environment-specific deployments
+   - Manual approval requirements
+   - Post-deployment validation
 
-### Required Permissions
+## Development Best Practices
 
-The service account has been configured with necessary roles in phases:
+1. **Cost Management**:
 
-1. **Initial Base Roles**:
+   - Use start/stop scripts for expensive resources
+   - Enable VPC only when needed
+   - Monitor GCP billing dashboard
 
-   - Cloud SQL Admin
-   - Storage Admin
-   - Compute Network Admin
-   - Cloud Run Admin
-   - Service Account User
+2. **Security**:
 
-2. **Extended Access**:
-   - Project IAM Admin (for managing IAM policies)
-   - VPC Access Admin (for managing VPC connectors)
+   - Follow least privilege principle
+   - Use environment-specific configurations
+   - Implement proper secret management
 
-This progressive role assignment follows the principle of least privilege while ensuring the service account has all necessary permissions for the CI/CD pipeline to function properly.
+3. **Development Workflow**:
+   - Create feature branches for changes
+   - Submit changes through pull requests
+   - Use conventional commit messages
 
-## CI/CD Implementation & Learning Goals
+## Contributing
 
-This project is also a learning journey to understand and implement modern DevOps practices, specifically CI/CD for Infrastructure as Code (IaC) on Google Cloud Platform.
+1. Create a new feature branch:
 
-### What is CI/CD?
+```bash
+git checkout -b feature/your-feature-name
+```
 
-- **Continuous Integration (CI):** Automatically checks and tests infrastructure code changes (like Terraform) on every commit or pull request.
-- **Continuous Deployment/Delivery (CD):** Automates the process of applying validated infrastructure changes to the cloud environment.
+2. Make your changes and commit:
 
-### Why CI/CD for IaC?
+```bash
+git add .
+git commit -m "feat: your feature description"
+```
 
-- Ensures all infrastructure changes are tested, reviewed, and deployed consistently.
-- Reduces manual errors and increases deployment speed.
-- Provides audit trails and easy rollback options.
+3. Push and create a pull request:
 
-### Tools Used
-
-- **GitHub Actions:** For automating CI/CD workflows.
-- **Terraform:** For defining and provisioning cloud infrastructure.
-- **Google Cloud Service Account:** For secure, automated access to GCP.
-
-### Planned Workflow
-
-1. On every pull request or push:
-   - Run Terraform formatting, validation, and planning.
-   - Optionally require approval before applying changes.
-2. On merge to main (or manual trigger):
-   - Apply infrastructure changes to GCP.
-
-### Learning Objectives
-
-- Understand how to automate infrastructure changes safely.
-- Learn to use GitHub Actions for cloud automation.
-- Practice secure credential management for automation.
-- Gain hands-on experience with real-world DevOps workflows.
-
-> As I progress, I will document key learnings and improvements here.
+```bash
+git push origin feature/your-feature-name
+gh pr create
+```
 
 ---
 
-If you are a hiring manager or recruiter, this project demonstrates my ability to design, automate, and manage secure, cost-effective, and scalable cloud infrastructure on GCP. I am actively seeking a Cloud Engineer role in Qatar and am eager to contribute my skills to your team.
+If you are a hiring manager or recruiter, this project demonstrates my ability to:
+
+- Design and implement cost-effective cloud infrastructure
+- Manage infrastructure as code using Terraform
+- Implement secure CI/CD pipelines
+- Follow cloud engineering best practices
+
+I am actively seeking a Cloud Engineer role in Qatar and am eager to contribute these skills to your team.

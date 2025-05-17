@@ -57,7 +57,7 @@ resource "google_sql_database_instance" "votes_db_prod" {
   }
 }
 
-# Development Database
+# Development Database - Main application database for development environment
 resource "google_sql_database" "votes_db_dev" {
   name       = "votes"
   instance   = google_sql_database_instance.votes_db_dev.name

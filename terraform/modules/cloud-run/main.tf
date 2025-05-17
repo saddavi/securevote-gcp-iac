@@ -1,0 +1,60 @@
+# terraform/cloud_run.tf
+# Cloud Run Service
+resource "google_cloud_run_service" "api" {
+  name     = "securevote-api-${var.environment}"
+  location = var.region
+
+  template {
+    spec {
+      containers {
+        # Using a placeholder image - in a real scenario, you'd build and deploy your own
+        image = "gcr.io/cloudrun/hello"
+
+        resources {
+          limits = {
+            memory = var.container_memory
+          }
+        }
+
+        env {
+          name  = "ENVIRONMENT"
+          value = var.environment
+        }
+
+        # Connect securely to Cloud SQL
+        env {
+          name  = "DB_HOST"
+          value = "/cloudsql/${var.database_instance}"
+        }
+
+        env {
+          name  = "DB_NAME"
+          value = var.database_name
+        }
+
+        env {
+          name  = "DB_PRIVATE_IP"
+          value = var.database_private_ip
+        }
+      }
+
+      # For Cloud SQL connection
+      service_account_name = var.service_account_email
+    }
+
+    metadata {
+      annotations = {
+        "autoscaling.knative.dev/minScale"        = var.min_instances
+        "autoscaling.knative.dev/maxScale"        = var.max_instances
+        "run.googleapis.com/cloudsql-instances"   = var.database_instance
+        "run.googleapis.com/vpc-access-connector" = var.vpc_connector_id
+        "run.googleapis.com/vpc-access-egress"    = "all-traffic"
+      }
+    }
+  }
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+}

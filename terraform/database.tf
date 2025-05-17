@@ -59,8 +59,8 @@ resource "google_sql_database_instance" "votes_db_prod" {
 
 # Development Database
 resource "google_sql_database" "votes_db_dev" {
-  name      = "votes"
-  instance  = google_sql_database_instance.votes_db_dev.name
+  name       = "votes"
+  instance   = google_sql_database_instance.votes_db_dev.name
   depends_on = [google_sql_database_instance.votes_db_dev]
 
   lifecycle {
@@ -70,8 +70,8 @@ resource "google_sql_database" "votes_db_dev" {
 
 # Production Database
 resource "google_sql_database" "votes_db_prod" {
-  name      = "votes"
-  instance  = google_sql_database_instance.votes_db_prod.name
+  name       = "votes"
+  instance   = google_sql_database_instance.votes_db_prod.name
   depends_on = [google_sql_database_instance.votes_db_prod]
 
   lifecycle {

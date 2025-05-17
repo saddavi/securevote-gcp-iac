@@ -1,5 +1,6 @@
 # terraform/database.tf
-# Development Database Instance
+# Database configuration for SecureVote application
+# Development Database Instance - Used for testing and staging environments
 resource "google_sql_database_instance" "votes_db_dev" {
   name             = "securevote-db-dev"
   database_version = "POSTGRES_14"
@@ -58,12 +59,22 @@ resource "google_sql_database_instance" "votes_db_prod" {
 
 # Development Database
 resource "google_sql_database" "votes_db_dev" {
-  name     = "votes"
-  instance = google_sql_database_instance.votes_db_dev.name
+  name      = "votes"
+  instance  = google_sql_database_instance.votes_db_dev.name
+  depends_on = [google_sql_database_instance.votes_db_dev]
+
+  lifecycle {
+    replace_triggered_by = [google_sql_database_instance.votes_db_dev]
+  }
 }
 
 # Production Database
 resource "google_sql_database" "votes_db_prod" {
-  name     = "votes"
-  instance = google_sql_database_instance.votes_db_prod.name
+  name      = "votes"
+  instance  = google_sql_database_instance.votes_db_prod.name
+  depends_on = [google_sql_database_instance.votes_db_prod]
+
+  lifecycle {
+    replace_triggered_by = [google_sql_database_instance.votes_db_prod]
+  }
 }

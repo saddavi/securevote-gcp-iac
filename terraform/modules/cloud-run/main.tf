@@ -33,8 +33,24 @@ resource "google_cloud_run_service" "api" {
         }
 
         env {
+          name  = "DB_USER"
+          value = var.database_user
+        }
+
+        env {
           name  = "DB_PRIVATE_IP"
           value = var.database_private_ip
+        }
+        
+        # Reference to Secret Manager for DB password
+        env {
+          name = "DB_PASSWORD"
+          value_from {
+            secret_key_ref {
+              name = var.db_password_secret_id
+              key  = "latest"
+            }
+          }
         }
       }
 

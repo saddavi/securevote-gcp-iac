@@ -17,3 +17,8 @@ output "private_ip_address" {
   description = "The private IP address of the database instance"
   value       = google_sql_database_instance.votes_db.private_ip_address
 }
+
+output "database_user" {
+  description = "The username to connect to the database"
+  value       = google_sql_user.db_user.name
+}

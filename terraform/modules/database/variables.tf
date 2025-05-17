@@ -32,3 +32,9 @@ variable "backup_time" {
   type        = string
   default     = "02:00"
 }
+
+variable "db_password" {
+  description = "The password for the database user"
+  type        = string
+  sensitive   = true
+}

@@ -52,7 +52,17 @@ variable "database_private_ip" {
   type        = string
 }
 
+variable "database_user" {
+  description = "The database username"
+  type        = string
+}
+
+variable "db_password_secret_id" {
+  description = "Secret ID for the database password in Secret Manager"
+  type        = string
+}
+
 variable "service_account_email" {
-  description = "The email of the service account to run the Cloud Run service"
+  description = "Email of the service account for Cloud Run"
   type        = string
 }

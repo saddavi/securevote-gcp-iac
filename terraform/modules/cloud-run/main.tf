@@ -24,7 +24,7 @@ resource "google_cloud_run_service" "api" {
         # Connect securely to Cloud SQL
         env {
           name  = "DB_HOST"
-          value = "/cloudsql/${var.database_instance}"
+          value = "/cloudsql/${var.database_connection_name}"
         }
 
         env {
@@ -62,7 +62,7 @@ resource "google_cloud_run_service" "api" {
       annotations = {
         "autoscaling.knative.dev/minScale"        = var.min_instances
         "autoscaling.knative.dev/maxScale"        = var.max_instances
-        "run.googleapis.com/cloudsql-instances"   = var.database_instance
+        "run.googleapis.com/cloudsql-instances"   = var.database_connection_name
         "run.googleapis.com/vpc-access-connector" = var.vpc_connector_id
         "run.googleapis.com/vpc-access-egress"    = "all-traffic"
       }

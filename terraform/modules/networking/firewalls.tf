@@ -3,7 +3,7 @@
 resource "google_compute_firewall" "vpc_allow_internal" {
   project     = var.project_id
   name        = "vpc-${var.environment}-allow-internal"
-  network     = google_compute_network.vpc.name
+  network     = google_compute_network.vpc[0].name
   description = "Allow internal traffic between resources in the ${var.environment} subnet"
 
   allow {
@@ -18,14 +18,14 @@ resource "google_compute_firewall" "vpc_allow_internal" {
     protocol = "icmp"
   }
 
-  source_ranges = [google_compute_subnetwork.subnet.ip_cidr_range]
+  source_ranges = [google_compute_subnetwork.subnet[0].ip_cidr_range]
 }
 
 # Allow Cloud Run to access VPC connector
 resource "google_compute_firewall" "vpc_allow_serverless_access" {
   project     = var.project_id
   name        = "vpc-${var.environment}-allow-serverless"
-  network     = google_compute_network.vpc.name
+  network     = google_compute_network.vpc[0].name
   description = "Allow serverless services to access VPC resources"
 
   allow {
@@ -47,7 +47,7 @@ resource "google_compute_firewall" "vpc_allow_serverless_access" {
 resource "google_compute_firewall" "vpc_allow_health_checks" {
   project     = var.project_id
   name        = "vpc-${var.environment}-allow-health-checks"
-  network     = google_compute_network.vpc.name
+  network     = google_compute_network.vpc[0].name
   description = "Allow health checks from Google Cloud Load Balancer"
 
   allow {

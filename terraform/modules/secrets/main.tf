@@ -34,7 +34,7 @@ resource "google_secret_manager_secret_version" "db_password_version" {
 resource "google_kms_key_ring" "secrets" {
   name     = "secrets-key-ring-${var.environment}"
   project  = var.project_id
-  location = var.region
+  location = "global"
 }
 
 resource "google_kms_crypto_key" "secret_key" {

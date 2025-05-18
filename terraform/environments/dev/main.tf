@@ -24,7 +24,7 @@ module "networking" {
   project_id  = var.project_id
   region      = var.region
   environment = "dev"
-  enable_vpc  = false  # Disable VPC in dev environment for cost savings
+  enable_vpc  = true  # Enable VPC for secure communication between services
 }
 
 module "database" {
@@ -50,6 +50,7 @@ module "cloud-run" {
   max_instances         = var.max_instances
   vpc_connector_id      = module.networking.vpc_connector_id
   database_instance     = module.database.instance_name
+  database_connection_name = module.database.instance_connection_name
   database_name         = module.database.database_name
   database_user         = module.database.database_user
   database_private_ip   = module.database.private_ip_address

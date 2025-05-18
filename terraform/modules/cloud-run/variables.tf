@@ -42,6 +42,11 @@ variable "database_instance" {
   type        = string
 }
 
+variable "database_connection_name" {
+  description = "The connection name of the database instance"
+  type        = string
+}
+
 variable "database_name" {
   description = "The name of the database"
   type        = string

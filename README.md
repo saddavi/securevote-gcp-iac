@@ -2,6 +2,10 @@
 
 Infrastructure code for a secure online voting/survey platform built on Google Cloud Platform using Terraform with a serverless architecture.
 
+## Project Status: Final Testing and Documentation Phase
+
+The SecureVote project is now in the final testing and documentation phase. All core infrastructure components have been implemented, database schema designed, and API endpoints created. The project is ready for final deployment and validation.
+
 ## Architecture Overview
 
 This project implements a modern, serverless architecture on GCP with:
@@ -144,15 +148,16 @@ To minimize costs during development, the following scripts are included and rea
 
 > Note: Cloud SQL and Cloud Storage will still incur storage costs even when stopped.
 
-## Planned Improvements
+## Documentation Resources
 
-With the core infrastructure and cost management scripts in place, the next planned improvements are:
+The following documentation is available to help you work with the SecureVote platform:
 
-- **Implement CI/CD:** Automate Terraform and application deployments using GitHub Actions or another pipeline.
-- **Security & Compliance:**
-  - Integrate Secret Manager for sensitive credentials
-  - Add audit logging for user actions
-  - Enhance IAM controls for more granular access
+- [**API Documentation**](/docs/api_documentation.md): Details of all API endpoints, authentication, and request/response formats
+- [**Deployment Guide**](/docs/deployment_guide.md): Step-by-step instructions for deploying the SecureVote platform
+- [**Cost Management**](/docs/cost_management.md): Strategies for keeping the project under the $10/month budget
+- [**Final Deployment Steps**](/docs/final_deployment.md): Instructions for completing the API deployment
+- [**Project Completion Report**](/docs/project_completion.md): Summary of accomplished work and next steps
+- [**Final Checklist**](/docs/final_checklist.md): Comprehensive checklist for project completion
 
 ## CI/CD Implementation Status
 

@@ -34,3 +34,4 @@ scripts/
 terraform/Stop and start DBs
 troubleshoot.sh
 
+/docs/

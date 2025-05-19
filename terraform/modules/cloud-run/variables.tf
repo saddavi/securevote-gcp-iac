@@ -71,3 +71,9 @@ variable "service_account_email" {
   description = "Email of the service account for Cloud Run"
   type        = string
 }
+
+variable "image" {
+  description = "The Docker image to deploy to Cloud Run"
+  type        = string
+  default     = "gcr.io/cloudrun/hello"
+}

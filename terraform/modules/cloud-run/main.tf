@@ -7,8 +7,8 @@ resource "google_cloud_run_service" "api" {
   template {
     spec {
       containers {
-        # Using a placeholder image - in a real scenario, you'd build and deploy your own
-        image = "gcr.io/cloudrun/hello"
+        # Use the specified image from variable
+        image = var.image
 
         resources {
           limits = {

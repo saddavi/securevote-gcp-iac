@@ -56,6 +56,7 @@ module "cloud-run" {
   database_private_ip   = module.database.private_ip_address
   service_account_email = module.iam.cloud_run_service_account_email
   db_password_secret_id = module.secrets.db_password_secret_id
+  image                 = var.cloud_run_image
 }
 
 module "iam" {

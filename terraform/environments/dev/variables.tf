@@ -49,3 +49,9 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "cloud_run_image" {
+  description = "The Docker image to deploy to Cloud Run"
+  type        = string
+  default     = "gcr.io/cloudrun/hello"
+}

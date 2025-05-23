@@ -16,28 +16,65 @@ const logger = winston.createLogger({
 // Determine if we're connecting via Cloud SQL proxy
 const isOnGoogleCloud = process.env.K_SERVICE ? true : false;
 
+let dbConfig = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+};
+
 let pool;
-if (isOnGoogleCloud) {
-  // Connect using Cloud SQL socket when running in Cloud Run
-  logger.info("Initializing Cloud SQL socket connection");
-  pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST.startsWith("/cloudsql/")
-      ? process.env.DB_HOST
-      : `/cloudsql/${process.env.DB_HOST}`,
+try {
+  if (isOnGoogleCloud) {
+    // Connect using Cloud SQL socket when running in Cloud Run
+    const dbHost = process.env.DB_HOST || "";
+
+    if (dbHost.startsWith("/cloudsql/")) {
+      // Using Unix socket
+      logger.info("Initializing Cloud SQL socket connection via " + dbHost);
+      dbConfig.host = dbHost;
+      // Set socket connection options
+      dbConfig.connectionTimeoutMillis = 30000;
+    } else if (process.env.DB_CONNECTION_NAME) {
+      // Fallback to connection name
+      logger.info(
+        "Using connection name for Cloud SQL: " + process.env.DB_CONNECTION_NAME
+      );
+      dbConfig.host = `/cloudsql/${process.env.DB_CONNECTION_NAME}`;
+      // Set socket connection options
+      dbConfig.connectionTimeoutMillis = 30000;
+    } else {
+      // Last resort - try private IP
+      logger.info("Attempting to connect via private IP");
+      dbConfig.host = process.env.DB_PRIVATE_IP || "localhost";
+      dbConfig.port = 5432;
+      // Add a retry mechanism for private IP connections
+      dbConfig.connectionTimeoutMillis = 30000;
+      dbConfig.statement_timeout = 60000;
+      dbConfig.idle_in_transaction_session_timeout = 60000;
+    }
+  } else {
+    // Connect via TCP for local development
+    logger.info("Initializing TCP connection to database");
+    dbConfig.host = process.env.DB_PRIVATE_IP || "localhost";
+    dbConfig.port = 5432;
+  }
+
+  logger.info("Creating database connection pool with config", {
+    host: dbConfig.host,
+    db: dbConfig.database,
+    user: dbConfig.user,
   });
-} else {
-  // Connect via TCP for local development
-  logger.info("Initializing TCP connection to database");
-  pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_PRIVATE_IP || "localhost",
-    port: 5432,
-  });
+
+  pool = new Pool(dbConfig);
+} catch (error) {
+  logger.error("Failed to initialize database pool:", error);
+  // Create a dummy pool that will return errors but not crash the app
+  pool = {
+    on: () => {},
+    connect: () =>
+      Promise.reject(new Error("Database connection not configured")),
+    query: () => Promise.reject(new Error("Database connection not available")),
+  };
 }
 
 // Add event listeners

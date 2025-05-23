@@ -28,6 +28,11 @@ resource "google_cloud_run_service" "api" {
         }
 
         env {
+          name  = "DB_CONNECTION_NAME"
+          value = var.database_connection_name
+        }
+
+        env {
           name  = "DB_NAME"
           value = var.database_name
         }
@@ -51,6 +56,24 @@ resource "google_cloud_run_service" "api" {
               key  = "latest"
             }
           }
+        }
+        
+        # Add NODE_ENV explicitly
+        env {
+          name  = "NODE_ENV"
+          value = var.environment
+        }
+        
+        # Add API version for health check
+        env {
+          name  = "API_VERSION"
+          value = "1.0.0"
+        }
+        
+        # Add CORS configuration
+        env {
+          name  = "CORS_ORIGIN"
+          value = "*"
         }
       }
 

@@ -5,13 +5,7 @@ const helmet = require("helmet");
 const winston = require("winston");
 require("dotenv").config();
 
-const authRoutes = require("./routes/auth");
-const electionRoutes = require("./routes/elections");
-const voteRoutes = require("./routes/votes");
-const resultRoutes = require("./routes/results");
-const db = require("./models/db");
-
-// Configure logger
+// Configure logger first for potential error handling
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || "info",
   format: winston.format.combine(
@@ -21,6 +15,38 @@ const logger = winston.createLogger({
   defaultMeta: { service: "securevote-api" },
   transports: [new winston.transports.Console()],
 });
+
+// Try loading bcrypt with robust error handling
+let bcryptAvailable = true;
+try {
+  require("bcrypt");
+  logger.info("bcrypt module loaded successfully");
+} catch (error) {
+  bcryptAvailable = false;
+  logger.error(`Failed to load bcrypt: ${error.message}`, { error });
+  logger.warn("Authentication features will be limited without bcrypt");
+
+  // Print more detailed diagnostics to help debug native module issues
+  if (error.code === "MODULE_NOT_FOUND") {
+    logger.error("bcrypt module not found - check npm installation");
+  } else if (error.message && error.message.includes("native module")) {
+    logger.error(
+      "Native module issue with bcrypt - likely a platform compatibility problem"
+    );
+    // Log system info to help diagnose
+    const os = require("os");
+    logger.info("System platform:", process.platform);
+    logger.info("System architecture:", process.arch);
+    logger.info("Node version:", process.version);
+  }
+}
+
+// Load other modules
+const authRoutes = require("./routes/auth");
+const electionRoutes = require("./routes/elections");
+const voteRoutes = require("./routes/votes");
+const resultRoutes = require("./routes/results");
+const db = require("./models/db");
 
 const app = express();
 
@@ -89,12 +115,52 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  logger.info(
-    `Server running on port ${PORT} in ${
-      process.env.NODE_ENV || "development"
-    } mode`
-  );
-});
+
+// Print Cloud Run specific environment info
+if (process.env.K_SERVICE) {
+  logger.info(`Running in Cloud Run environment`);
+  logger.info(`Service: ${process.env.K_SERVICE}`);
+  logger.info(`Revision: ${process.env.K_REVISION}`);
+  logger.info(`DB_HOST: ${process.env.DB_HOST || "not set"}`);
+}
+
+// Start server with better error handling
+try {
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    logger.info(
+      `Server running on port ${PORT} in ${
+        process.env.NODE_ENV || "development"
+      } mode`
+    );
+    logger.info(`Health check available at http://0.0.0.0:${PORT}/health`);
+  });
+
+  // Handle graceful shutdown
+  process.on("SIGTERM", () => {
+    logger.info("SIGTERM received, shutting down gracefully");
+    server.close(() => {
+      logger.info("Server closed");
+      process.exit(0);
+    });
+
+    // Force close after timeout
+    setTimeout(() => {
+      logger.error("Forced shutdown after timeout");
+      process.exit(1);
+    }, 10000);
+  });
+
+  server.on("error", (error) => {
+    logger.error(`Server error: ${error.message}`, { error });
+    // Try to restart with minimal server as a last resort
+    if (error.code === "EADDRINUSE") {
+      logger.error(`Port ${PORT} is already in use`);
+    }
+    process.exit(1);
+  });
+} catch (error) {
+  logger.error(`Failed to start server: ${error.message}`, { error });
+  process.exit(1);
+}
 
 module.exports = app;

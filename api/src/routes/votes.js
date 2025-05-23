@@ -17,6 +17,32 @@ router.post("/", verifyToken, async (req, res, next) => {
       });
     }
 
+    // First check if the tables exist
+    const tablesCheck = await db.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'elections'
+      ) as elections_exist,
+      EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'votes'
+      ) as votes_exist;
+    `);
+
+    // If tables don't exist, return a helpful error
+    if (
+      !tablesCheck.rows[0].elections_exist ||
+      !tablesCheck.rows[0].votes_exist
+    ) {
+      return res.status(503).json({
+        error: "Database schema not yet initialized",
+        message:
+          "Run database migrations to set up schema before casting votes.",
+      });
+    }
+
     // Check if election exists and is active
     const electionResult = await db.query(
       `SELECT * 

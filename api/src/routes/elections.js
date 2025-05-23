@@ -6,6 +6,24 @@ const { verifyToken, isAdmin } = require("../middleware/auth");
 // Get all elections
 router.get("/", async (req, res, next) => {
   try {
+    // First check if the table exists
+    const tableCheck = await db.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'elections'
+      );
+    `);
+
+    // If table doesn't exist, return an empty array with a message
+    if (!tableCheck.rows[0].exists) {
+      return res.status(200).json({
+        elections: [],
+        message:
+          "Elections table not yet created. Run database migrations to set up schema.",
+      });
+    }
+
     let query = `
       SELECT election_id, title, description, start_date, end_date, status
       FROM elections

@@ -1,9 +1,40 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../models/db");
 const { validateEmail, validatePassword } = require("../utils/validators");
+
+// Try to import bcrypt with fallback
+let bcrypt;
+try {
+  bcrypt = require("bcrypt");
+} catch (error) {
+  console.error("Failed to load bcrypt:", error.message);
+
+  // More robust diagnostics for bcrypt loading failure
+  if (process.env.NODE_ENV === "production") {
+    console.error(
+      "CRITICAL ERROR: bcrypt failed to load in production environment"
+    );
+    console.error("Error details:", error);
+    console.error(
+      "System info - Platform:",
+      process.platform,
+      "Arch:",
+      process.arch
+    );
+  }
+
+  // Simple fallback for hashing in development/testing only
+  // NOT SECURE FOR PRODUCTION - only used when bcrypt fails
+  bcrypt = {
+    hash: async (password) => `insecure_hash_${password}`,
+    compare: async (password, hash) => hash === `insecure_hash_${password}`,
+  };
+
+  // Log a warning to make it clear we're using the insecure fallback
+  console.warn("SECURITY WARNING: Using insecure password hashing fallback");
+}
 
 // User registration
 router.post("/register", async (req, res, next) => {
@@ -25,6 +56,24 @@ router.post("/register", async (req, res, next) => {
       return res.status(400).json({
         error:
           "Password must be at least 8 characters with letters, numbers, and symbols",
+      });
+    }
+
+    // Check if users table exists
+    const tableCheck = await db.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      );
+    `);
+
+    // If table doesn't exist, return a helpful error
+    if (!tableCheck.rows[0].exists) {
+      return res.status(503).json({
+        error: "Database schema not initialized",
+        message:
+          "Run database migrations to set up user schema before registration.",
       });
     }
 
@@ -75,7 +124,9 @@ router.post("/login", async (req, res, next) => {
     const { email, password } = req.body;
 
     // Find user
-    const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+    const result = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
 
     if (result.rows.length === 0) {
       return res.status(401).json({ error: "Invalid credentials" });

@@ -38,30 +38,126 @@ Infrastructure code for a secure online voting/survey platform built on Google C
 
 ## Project Journey & Status
 
-### Initial Concept (Day 1-2)
+### Initial Concept & Setup Challenges (Day 1-2)
 
 I started this project as my first ever Google Cloud Platform implementation with the goal of creating a secure online voting system. Having no prior GCP experience, I faced numerous initial challenges:
 
 - Learning GCP's service equivalents coming from AWS experience
 - Understanding Terraform's application in the GCP environment
 - Figuring out the right architecture for a budget-conscious serverless application
+- Setting up GCP account with proper organization, projects, and billing
 
-### Architecture Evolution (Day 3-5)
+#### Initial Setup Difficulties & Solutions
 
-My initial architecture was monolithic with all infrastructure in a single Terraform file. I soon realized this wasn't maintainable and refactored to:
+1. **GCP Project Creation**: 
+   - Initially created the wrong project structure
+   - Had to recreate the project with proper billing account linkage
+   - Learned about project labels and organization
+
+2. **Service Account Permissions**:
+   - Struggled with "least privilege" setup
+   - First attempt used too restrictive permissions, causing deployment failures
+   - Eventually created a custom role with exactly required permissions:
+     ```bash
+     # Sample command that finally worked
+     gcloud iam roles create customTerraformRole --project=securevote-iac \
+       --title="Custom Terraform Deployment Role" \
+       --permissions="compute.instances.create,storage.buckets.create,..."
+     ```
+
+3. **Local Development Environment**:
+   - Had issues with Google Cloud SDK installation and configuration
+   - Proper setup with application default credentials:
+     ```bash
+     gcloud auth application-default login
+     gcloud config set project securevote-iac
+     ```
+
+### Architecture Evolution & Refactoring Journey (Day 3-5)
+
+My initial architecture was monolithic with all infrastructure in a single Terraform file (over 400 lines of code). I soon realized this wasn't maintainable and refactored to:
 
 1. Create a modular architecture with separate components
 2. Implement environment isolation between dev and prod
 3. Set up proper networking with optional VPC for cost savings
 
+#### Refactoring Challenges & Solutions
+
+1. **State Management Issues**:
+   - Initially broke the infrastructure during refactoring by moving resources
+   - Learned how to use `terraform state mv` to restructure without destroying:
+     ```bash
+     # Moving resources between modules
+     terraform state mv google_cloud_run_service.api module.cloud-run.google_cloud_run_service.api
+     ```
+   - Had to roll back twice before understanding proper state migration
+
+2. **Resource Dependencies**:
+   - Circular dependencies between modules caused failures
+   - Resolved by carefully planning module outputs and dependencies
+   - Learned to use data sources instead of direct references where appropriate:
+     ```hcl
+     data "google_project" "current" {}
+     ```
+
+3. **Environment Separation**:
+   - Initially tried using workspaces (wrong approach for our needs)
+   - Switched to separate directories for environments with shared modules
+   - Used tfvars files to manage environment-specific values:
+     ```bash
+     # Dev environment
+     terraform apply -var-file=environments/dev/terraform.tfvars
+     ```
+
 ### API Development Challenges (Day 6-10)
 
-The Node.js API implementation faced several critical issues:
+The Node.js API implementation faced several critical issues that took significant time to diagnose and resolve:
 
 1. **Cloud SQL Proxy Connection Issues**: The API couldn't connect to the database through the socket
+   - Initial error: `ENOENT: no such file or directory, connect '/cloudsql/securevote-iac:us-central1:securevote-db'`
+   - Attempted solutions:
+     - First tried adjusting permissions (wrong approach)
+     - Checked if Cloud SQL proxy was running (it was)
+     - Eventually discovered the issue was incorrect socket path formatting
+   - Debugging steps that helped:
+     ```bash
+     # Command that helped diagnose the issue
+     lsof -p $(pgrep cloud_sql_proxy) | grep LISTEN
+     ```
+
 2. **Database Connection Management**: Poor connection handling caused performance issues
+   - Symptoms: API would slow down after ~100 requests
+   - Root cause: Each API call created a new connection but never closed it
+   - Used connection pooling patterns instead of direct connections
+   - Monitored connection status with:
+     ```sql
+     SELECT * FROM pg_stat_activity WHERE datname = 'securevote';
+     ```
+
 3. **bcrypt Compatibility Problems**: Authentication failures due to bcrypt version conflicts
+   - Error: `Error: Invalid salt version`
+   - Discovered bcrypt v3.x and v5.x have different hash formats
+   - Fixed by standardizing the bcrypt version and regenerating test user passwords
+
 4. **Server Initialization Errors**: The API server wouldn't start properly
+   - Error: `Cannot set headers after they are sent to the client`
+   - Traced issue to middleware initialization order
+   - Fixed by ensuring error handlers were registered last
+   - Learned to use debug mode to trace issues:
+     ```bash
+     NODE_ENV=development DEBUG=express:* node src/server.js
+     ```
+
+### Project Timeline & Progress Markers
+
+| Day/Period | Milestone | Key Achievements | Challenges Overcome |
+|------------|-----------|------------------|---------------------|
+| Day 1-2    | Project Setup | GCP account creation, initial Terraform setup | Service account permission issues |
+| Day 3-5    | Architecture Refactoring | Modular structure, environment isolation | State management, circular dependencies |
+| Day 6-8    | Database & API Scaffold | Schema design, API structure, container setup | Cloud SQL connectivity, Docker configuration |
+| Day 9-10   | API Integration | API endpoints, auth flow, testing | bcrypt compatibility, connection pooling |
+| Day 11-13  | Security Hardening | IAM refinement, Secret Manager integration | Least privilege implementation |
+| Day 14-15  | Documentation & Final Testing | Complete docs, API testing | Final bug fixes in connectivity |
 
 ### Current Status: Final Testing and Documentation Phase
 
@@ -528,6 +624,63 @@ The workflow includes:
    - Create feature branches for changes
    - Submit changes through pull requests
    - Use conventional commit messages
+
+## Debugging & Troubleshooting Guide
+
+This section documents the debugging tools and techniques that were most helpful during my GCP learning journey:
+
+### GCP-Specific Debugging
+
+1. **Cloud Logging**:
+   - Essential for debugging Cloud Run services
+   - Useful query examples:
+     ```
+     resource.type="cloud_run_revision"
+     resource.labels.service_name="securevote-api"
+     severity>=ERROR
+     ```
+
+2. **Cloud SQL Debugging**:
+   - PostgreSQL log inspection:
+     ```bash
+     gcloud sql connect securevote-db --user=postgres
+     # Then within psql
+     SELECT * FROM pg_stat_activity;
+     ```
+   - Connection testing script:
+     ```bash
+     ./scripts/test_connectivity.sh
+     ```
+
+3. **Terraform Debugging**:
+   - Useful commands that saved me hours:
+     ```bash
+     # Show detailed plan output
+     terraform plan -detailed-exitcode
+     
+     # Debug logging
+     TF_LOG=DEBUG terraform apply
+     
+     # Validate syntax
+     terraform validate
+     ```
+
+### Common Error Patterns & Solutions
+
+1. **"Permission denied" errors**:
+   - Always check IAM bindings first
+   - Verify service account has token creator permission
+   - Check if using correct project ID
+
+2. **Cloud SQL Connection Issues**:
+   - Verify private IP connectivity
+   - Check VPC peering status
+   - Ensure Cloud SQL proxy is running with correct instance
+
+3. **API "Connection refused" errors**:
+   - Check network connectivity
+   - Verify port mappings
+   - Test with curl from within the container
 
 ## Git Workflow & Branch Management
 

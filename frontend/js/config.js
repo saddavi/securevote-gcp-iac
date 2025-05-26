@@ -1,7 +1,7 @@
 // Configuration for SecureVote Frontend
 const CONFIG = {
   // API Configuration
-  API_BASE_URL: "https://securevote-api-dev-2lxq5hy3iq-uc.a.run.app",
+  API_BASE_URL: "https://securevote-api-dev-832948640879.us-central1.run.app",
   API_ENDPOINTS: {
     // Authentication
     REGISTER: "/api/auth/register",

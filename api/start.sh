@@ -117,18 +117,24 @@ node -e "console.log('Node.js environment check passed: ' + process.version)" ||
   exec node src/minimal_server.js
 }
 
-# Try to start the main server
+# Test direct Node.js logging to stdout
+node -e "console.log('NODE_LOG_TEST: Hello from Node.js stdout!')"
+
+# Start the main SecureVote API server
+echo "Starting main SecureVote API server..."
 if node src/server.js; then
-  echo "Server started successfully"
+  echo "Main API server started successfully"
 else
-  EXIT_CODE=$?
-  echo "Main server failed to start with exit code $EXIT_CODE"
-  echo "Using minimal server instead for diagnostics"
+  exit_code=$?
+  echo "Main server failed with exit code: $exit_code"
   
-  # Create runtime diagnostics file
-  echo "Creating runtime diagnostics report..."
-  node -e "console.log('Runtime: ' + process.version); console.log('Platform: ' + process.platform); console.log('Architecture: ' + process.arch); console.log('Modules: ' + process.versions)" > /tmp/node-diagnostics.log
-  
-  # Start minimal server
-  exec node src/minimal_server.js
+  # If main server fails, try the auth debugger as fallback
+  echo "Attempting to start authentication debugger as fallback..."
+  if node src/auth_debugger.js; then
+    echo "Auth debugger fallback started successfully"
+  else
+    fallback_exit_code=$?
+    echo "Both servers failed - main: $exit_code, fallback: $fallback_exit_code"
+    exit $exit_code
+  fi
 fi

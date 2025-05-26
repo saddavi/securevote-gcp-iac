@@ -75,6 +75,12 @@ resource "google_cloud_run_service" "api" {
           name  = "CORS_ORIGIN"
           value = "*"
         }
+        
+        # Add JWT Secret for authentication
+        env {
+          name  = "JWT_SECRET"
+          value = "dev-secure-vote-jwt-secret-key-2025"
+        }
       }
 
       # For Cloud SQL connection

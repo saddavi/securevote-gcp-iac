@@ -49,12 +49,14 @@ I started this project as my first ever Google Cloud Platform implementation wit
 
 #### Initial Setup Difficulties & Solutions
 
-1. **GCP Project Creation**: 
+1. **GCP Project Creation**:
+
    - Initially created the wrong project structure
    - Had to recreate the project with proper billing account linkage
    - Learned about project labels and organization
 
 2. **Service Account Permissions**:
+
    - Struggled with "least privilege" setup
    - First attempt used too restrictive permissions, causing deployment failures
    - Eventually created a custom role with exactly required permissions:
@@ -84,6 +86,7 @@ My initial architecture was monolithic with all infrastructure in a single Terra
 #### Refactoring Challenges & Solutions
 
 1. **State Management Issues**:
+
    - Initially broke the infrastructure during refactoring by moving resources
    - Learned how to use `terraform state mv` to restructure without destroying:
      ```bash
@@ -93,6 +96,7 @@ My initial architecture was monolithic with all infrastructure in a single Terra
    - Had to roll back twice before understanding proper state migration
 
 2. **Resource Dependencies**:
+
    - Circular dependencies between modules caused failures
    - Resolved by carefully planning module outputs and dependencies
    - Learned to use data sources instead of direct references where appropriate:
@@ -114,6 +118,7 @@ My initial architecture was monolithic with all infrastructure in a single Terra
 The Node.js API implementation faced several critical issues that took significant time to diagnose and resolve:
 
 1. **Cloud SQL Proxy Connection Issues**: The API couldn't connect to the database through the socket
+
    - Initial error: `ENOENT: no such file or directory, connect '/cloudsql/securevote-iac:us-central1:securevote-db'`
    - Attempted solutions:
      - First tried adjusting permissions (wrong approach)
@@ -126,6 +131,7 @@ The Node.js API implementation faced several critical issues that took significa
      ```
 
 2. **Database Connection Management**: Poor connection handling caused performance issues
+
    - Symptoms: API would slow down after ~100 requests
    - Root cause: Each API call created a new connection but never closed it
    - Used connection pooling patterns instead of direct connections
@@ -135,6 +141,7 @@ The Node.js API implementation faced several critical issues that took significa
      ```
 
 3. **bcrypt Compatibility Problems**: Authentication failures due to bcrypt version conflicts
+
    - Error: `Error: Invalid salt version`
    - Discovered bcrypt v3.x and v5.x have different hash formats
    - Fixed by standardizing the bcrypt version and regenerating test user passwords
@@ -150,14 +157,14 @@ The Node.js API implementation faced several critical issues that took significa
 
 ### Project Timeline & Progress Markers
 
-| Day/Period | Milestone | Key Achievements | Challenges Overcome |
-|------------|-----------|------------------|---------------------|
-| Day 1-2    | Project Setup | GCP account creation, initial Terraform setup | Service account permission issues |
-| Day 3-5    | Architecture Refactoring | Modular structure, environment isolation | State management, circular dependencies |
-| Day 6-8    | Database & API Scaffold | Schema design, API structure, container setup | Cloud SQL connectivity, Docker configuration |
-| Day 9-10   | API Integration | API endpoints, auth flow, testing | bcrypt compatibility, connection pooling |
-| Day 11-13  | Security Hardening | IAM refinement, Secret Manager integration | Least privilege implementation |
-| Day 14-15  | Documentation & Final Testing | Complete docs, API testing | Final bug fixes in connectivity |
+| Day/Period | Milestone                     | Key Achievements                              | Challenges Overcome                          |
+| ---------- | ----------------------------- | --------------------------------------------- | -------------------------------------------- |
+| Day 1-2    | Project Setup                 | GCP account creation, initial Terraform setup | Service account permission issues            |
+| Day 3-5    | Architecture Refactoring      | Modular structure, environment isolation      | State management, circular dependencies      |
+| Day 6-8    | Database & API Scaffold       | Schema design, API structure, container setup | Cloud SQL connectivity, Docker configuration |
+| Day 9-10   | API Integration               | API endpoints, auth flow, testing             | bcrypt compatibility, connection pooling     |
+| Day 11-13  | Security Hardening            | IAM refinement, Secret Manager integration    | Least privilege implementation               |
+| Day 14-15  | Documentation & Final Testing | Complete docs, API testing                    | Final bug fixes in connectivity              |
 
 ### Current Status: Final Testing and Documentation Phase
 
@@ -632,6 +639,7 @@ This section documents the debugging tools and techniques that were most helpful
 ### GCP-Specific Debugging
 
 1. **Cloud Logging**:
+
    - Essential for debugging Cloud Run services
    - Useful query examples:
      ```
@@ -641,6 +649,7 @@ This section documents the debugging tools and techniques that were most helpful
      ```
 
 2. **Cloud SQL Debugging**:
+
    - PostgreSQL log inspection:
      ```bash
      gcloud sql connect securevote-db --user=postgres
@@ -654,13 +663,14 @@ This section documents the debugging tools and techniques that were most helpful
 
 3. **Terraform Debugging**:
    - Useful commands that saved me hours:
+
      ```bash
      # Show detailed plan output
      terraform plan -detailed-exitcode
-     
+
      # Debug logging
      TF_LOG=DEBUG terraform apply
-     
+
      # Validate syntax
      terraform validate
      ```
@@ -668,11 +678,13 @@ This section documents the debugging tools and techniques that were most helpful
 ### Common Error Patterns & Solutions
 
 1. **"Permission denied" errors**:
+
    - Always check IAM bindings first
    - Verify service account has token creator permission
    - Check if using correct project ID
 
 2. **Cloud SQL Connection Issues**:
+
    - Verify private IP connectivity
    - Check VPC peering status
    - Ensure Cloud SQL proxy is running with correct instance

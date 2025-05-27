@@ -39,26 +39,32 @@
 ## 🔐 Test Credentials
 
 ### ⚠️ IMPORTANT PASSWORD RESET INFORMATION
+
 **The test user password was reset multiple times during deployment due to bcrypt hashing issues.**
 
 **CURRENT WORKING CREDENTIALS (as of final deployment):**
+
 - **Email**: `test@example.com`
 - **Password**: `password` (plain text - this is correct)
 - **Role**: `admin`
 
 ### Password Reset History & Context
+
 During deployment, we encountered several authentication issues:
+
 1. **Initial Issue**: Test user had incorrect bcrypt hash format
 2. **Migration 004**: First password reset attempt with complex hash
 3. **Migration 005**: Final password reset with working bcrypt hash
 4. **Final Hash**: `$2b$10$n9TvvhfLp0n8NtZpGZmTT.W.UoFXSUGRadPvTYajrUodmDgfsBYcS`
 
 **Database Migration Files Applied:**
+
 - `003_create_test_user.sql` - Initial user creation
 - `004_update_test_user.sql` - First password fix attempt
 - `005_reset_test_user.sql` - **FINAL working password reset**
 
 **How to Verify Current Password:**
+
 ```bash
 # Test login via API
 curl -X POST https://securevote-api-dev-832948640879.us-central1.run.app/api/auth/login \

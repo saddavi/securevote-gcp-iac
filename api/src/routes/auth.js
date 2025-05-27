@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const db = require("../models/db");
 const { validateEmail, validatePassword } = require("../utils/validators");
+const { verifyToken, isAdmin } = require("../middleware/auth");
 
 // Try to import bcrypt with fallback
 let bcrypt;
@@ -46,6 +47,18 @@ router.post("/register", async (req, res, next) => {
       organization,
       role = "voter",
     } = req.body;
+
+    // Security: Only allow 'voter' role for public registration
+    // Administrative accounts must be created through secure admin processes
+    const allowedRoles = ['voter'];
+    const sanitizedRole = 'voter'; // Force all public registrations to voter role
+    
+    if (role && role !== 'voter') {
+      return res.status(403).json({ 
+        error: "Access denied",
+        message: "Public registration is limited to voter accounts only. Administrative accounts require special provisioning."
+      });
+    }
 
     // Validate input
     if (!validateEmail(email)) {
@@ -94,7 +107,7 @@ router.post("/register", async (req, res, next) => {
     const result = await db.query(
       `INSERT INTO users (email, hashed_password, full_name, organization, role) 
        VALUES ($1, $2, $3, $4, $5) RETURNING user_id, email, role`,
-      [email, hashedPassword, fullName, organization, role]
+      [email, hashedPassword, fullName, organization, sanitizedRole]
     );
 
     // Create JWT
@@ -232,6 +245,72 @@ router.get("/me", async (req, res, next) => {
     if (error.name === "JsonWebTokenError") {
       return res.status(401).json({ error: "Invalid token" });
     }
+    next(error);
+  }
+});
+
+// Secure admin account creation (requires existing admin privileges)
+router.post("/create-admin", verifyToken, isAdmin, async (req, res, next) => {
+  try {
+    const {
+      email,
+      password,
+      fullName,
+      organization,
+      role = "admin",
+    } = req.body;
+
+    // Validate allowed admin roles
+    const allowedAdminRoles = ['admin', 'election_administrator', 'moderator'];
+    if (!allowedAdminRoles.includes(role)) {
+      return res.status(400).json({ 
+        error: "Invalid role",
+        message: `Allowed admin roles: ${allowedAdminRoles.join(', ')}`
+      });
+    }
+
+    // Validate input
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    if (!validatePassword(password)) {
+      return res.status(400).json({
+        error: "Password must be at least 8 characters with letters, numbers, and symbols",
+      });
+    }
+
+    // Check if user already exists
+    const userCheck = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+
+    if (userCheck.rows.length > 0) {
+      return res.status(409).json({ error: "User already exists" });
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Insert new admin user
+    const result = await db.query(
+      `INSERT INTO users (email, hashed_password, full_name, organization, role) 
+       VALUES ($1, $2, $3, $4, $5) RETURNING user_id, email, role, full_name, organization, created_at`,
+      [email, hashedPassword, fullName, organization, role]
+    );
+
+    // Log admin creation for audit trail
+    console.log(`Admin account created: ${email} (${role}) by admin: ${req.user.email}`);
+
+    res.status(201).json({
+      message: "Admin account created successfully",
+      user: result.rows[0],
+      createdBy: req.user.email
+    });
+
+  } catch (error) {
+    console.error("Error creating admin account:", error);
     next(error);
   }
 });

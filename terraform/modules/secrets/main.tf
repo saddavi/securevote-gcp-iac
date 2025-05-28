@@ -3,7 +3,7 @@
 resource "google_secret_manager_secret" "db_password" {
   project   = var.project_id
   secret_id = "db-password-${var.environment}"
-  
+
   replication {
     auto {
       customer_managed_encryption {
@@ -47,7 +47,7 @@ resource "google_secret_manager_secret_iam_binding" "secret_access" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.db_password.secret_id
   role      = "roles/secretmanager.secretAccessor"
-  
+
   members = [
     "serviceAccount:${var.service_account_email}"
   ]

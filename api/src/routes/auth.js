@@ -50,13 +50,14 @@ router.post("/register", async (req, res, next) => {
 
     // Security: Only allow 'voter' role for public registration
     // Administrative accounts must be created through secure admin processes
-    const allowedRoles = ['voter'];
-    const sanitizedRole = 'voter'; // Force all public registrations to voter role
-    
-    if (role && role !== 'voter') {
-      return res.status(403).json({ 
+    const allowedRoles = ["voter"];
+    const sanitizedRole = "voter"; // Force all public registrations to voter role
+
+    if (role && role !== "voter") {
+      return res.status(403).json({
         error: "Access denied",
-        message: "Public registration is limited to voter accounts only. Administrative accounts require special provisioning."
+        message:
+          "Public registration is limited to voter accounts only. Administrative accounts require special provisioning.",
       });
     }
 
@@ -261,11 +262,11 @@ router.post("/create-admin", verifyToken, isAdmin, async (req, res, next) => {
     } = req.body;
 
     // Validate allowed admin roles
-    const allowedAdminRoles = ['admin', 'election_administrator', 'moderator'];
+    const allowedAdminRoles = ["admin", "election_administrator", "moderator"];
     if (!allowedAdminRoles.includes(role)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "Invalid role",
-        message: `Allowed admin roles: ${allowedAdminRoles.join(', ')}`
+        message: `Allowed admin roles: ${allowedAdminRoles.join(", ")}`,
       });
     }
 
@@ -276,7 +277,8 @@ router.post("/create-admin", verifyToken, isAdmin, async (req, res, next) => {
 
     if (!validatePassword(password)) {
       return res.status(400).json({
-        error: "Password must be at least 8 characters with letters, numbers, and symbols",
+        error:
+          "Password must be at least 8 characters with letters, numbers, and symbols",
       });
     }
 
@@ -301,14 +303,15 @@ router.post("/create-admin", verifyToken, isAdmin, async (req, res, next) => {
     );
 
     // Log admin creation for audit trail
-    console.log(`Admin account created: ${email} (${role}) by admin: ${req.user.email}`);
+    console.log(
+      `Admin account created: ${email} (${role}) by admin: ${req.user.email}`
+    );
 
     res.status(201).json({
       message: "Admin account created successfully",
       user: result.rows[0],
-      createdBy: req.user.email
+      createdBy: req.user.email,
     });
-
   } catch (error) {
     console.error("Error creating admin account:", error);
     next(error);

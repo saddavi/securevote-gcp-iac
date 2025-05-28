@@ -27,5 +27,5 @@ resource "google_vpc_access_connector" "connector" {
   ip_cidr_range = var.environment == "prod" ? "10.9.0.0/28" : "10.8.0.0/28"
   network       = google_compute_network.vpc[0].name
   region        = var.region
-  machine_type  = "e2-micro"  # Smallest available instance
+  machine_type  = "e2-micro" # Smallest available instance
 }

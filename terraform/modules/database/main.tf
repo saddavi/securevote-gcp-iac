@@ -45,6 +45,6 @@ resource "google_sql_user" "db_user" {
   name     = "securevote-app-user-${var.environment}"
   instance = google_sql_database_instance.votes_db.name
   password = var.db_password
-  
+
   depends_on = [google_sql_database_instance.votes_db]
 }

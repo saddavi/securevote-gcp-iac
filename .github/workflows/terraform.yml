@@ -17,9 +17,13 @@ jobs:
     name: "Terraform Format, Validate & Plan"
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        environment: [dev, prod]
+
     defaults:
       run:
-        working-directory: terraform
+        working-directory: terraform/environments/${{ matrix.environment }}
 
     steps:
       - name: Checkout code
@@ -30,6 +34,7 @@ jobs:
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
+        working-directory: terraform
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -54,39 +59,39 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan Development
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.environment == 'dev'
         id: plan-dev
         run: |
           terraform plan -no-color -input=false \
-            -var-file="dev.tfvars" \
+            -var-file="terraform.tfvars" \
             -var="project_id=${{ steps.extract-email.outputs.project_id }}" \
             -var="terraform_service_account_email=${{ steps.extract-email.outputs.service_account_email }}" \
             -out=tfplan-dev
 
       - name: Terraform Plan Production
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && matrix.environment == 'prod'
         id: plan-prod
         run: |
           terraform plan -no-color -input=false \
-            -var-file="prod.tfvars" \
+            -var-file="terraform.tfvars" \
             -var="project_id=${{ steps.extract-email.outputs.project_id }}" \
             -var="terraform_service_account_email=${{ steps.extract-email.outputs.service_account_email }}" \
             -out=tfplan-prod
 
       - name: Upload Development Plan
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.environment == 'dev'
         uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-dev
-          path: terraform/tfplan-dev
+          path: terraform/environments/dev/tfplan-dev
           retention-days: 5
 
       - name: Upload Production Plan
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && matrix.environment == 'prod'
         uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-prod
-          path: terraform/tfplan-prod
+          path: terraform/environments/prod/tfplan-prod
           retention-days: 5
 
   deploy:
@@ -99,7 +104,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: terraform
+        working-directory: terraform/environments/prod
 
     steps:
       - name: Checkout code
@@ -132,7 +137,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: terraform-plan-prod
-          path: terraform
+          path: terraform/environments/prod
 
       - name: Terraform Init
         run: terraform init

@@ -46,7 +46,7 @@ resource "google_cloud_run_service" "api" {
           name  = "DB_PRIVATE_IP"
           value = var.database_private_ip
         }
-        
+
         # Reference to Secret Manager for DB password
         env {
           name = "DB_PASSWORD"
@@ -57,25 +57,25 @@ resource "google_cloud_run_service" "api" {
             }
           }
         }
-        
+
         # Add NODE_ENV explicitly
         env {
           name  = "NODE_ENV"
           value = var.environment
         }
-        
+
         # Add API version for health check
         env {
           name  = "API_VERSION"
           value = "1.0.0"
         }
-        
+
         # Add CORS configuration
         env {
           name  = "CORS_ORIGIN"
           value = "*"
         }
-        
+
         # Add JWT Secret for authentication
         env {
           name  = "JWT_SECRET"

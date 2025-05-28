@@ -1,5 +1,6 @@
 terraform {
   backend "gcs" {
+    bucket = "talha-gcp-securevote-tfstate-bucket"
     prefix = "terraform/state/prod"
   }
 }

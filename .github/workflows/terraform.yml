@@ -1,0 +1,185 @@
+name: "Terraform CI/CD"
+
+on:
+  push:
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+
+jobs:
+  terraform-format-check:
+    name: "Terraform Format Check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: terraform
+
+  terraform-dev:
+    name: "Terraform Dev Environment"
+    runs-on: ubuntu-latest
+    needs: terraform-format-check
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: terraform/environments/dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Extract Service Account Email
+        id: extract-email
+        run: |
+          echo "service_account_email=$(echo '${{ secrets.GCP_CREDENTIALS }}' | jq -r '.client_email')" >> $GITHUB_OUTPUT
+          echo "project_id=$(echo '${{ secrets.GCP_CREDENTIALS }}' | jq -r '.project_id')" >> $GITHUB_OUTPUT
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan Dev
+        id: plan-dev
+        run: |
+          terraform plan -no-color -input=false \
+            -var-file="terraform.tfvars" \
+            -var="project_id=${{ steps.extract-email.outputs.project_id }}" \
+            -var="terraform_service_account_email=${{ steps.extract-email.outputs.service_account_email }}" \
+            -out=tfplan-dev
+
+      - name: Upload Development Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-dev
+          path: terraform/environments/dev/tfplan-dev
+          retention-days: 5
+
+  terraform-prod:
+    name: "Terraform Prod Environment"
+    runs-on: ubuntu-latest
+    needs: terraform-format-check
+    if: github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: terraform/environments/prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Extract Service Account Email
+        id: extract-email
+        run: |
+          echo "service_account_email=$(echo '${{ secrets.GCP_CREDENTIALS }}' | jq -r '.client_email')" >> $GITHUB_OUTPUT
+          echo "project_id=$(echo '${{ secrets.GCP_CREDENTIALS }}' | jq -r '.project_id')" >> $GITHUB_OUTPUT
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan Prod
+        id: plan-prod
+        run: |
+          terraform plan -no-color -input=false \
+            -var-file="terraform.tfvars" \
+            -var="project_id=${{ steps.extract-email.outputs.project_id }}" \
+            -var="terraform_service_account_email=${{ steps.extract-email.outputs.service_account_email }}" \
+            -out=tfplan-prod
+
+      - name: Upload Production Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-prod
+          path: terraform/environments/prod/tfplan-prod
+          retention-days: 5
+
+  deploy-prod:
+    name: "Deploy Production Infrastructure"
+    needs: terraform-prod
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+
+    defaults:
+      run:
+        working-directory: terraform/environments/prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Extract Service Account Email
+        id: extract-email
+        run: |
+          echo "service_account_email=$(echo '${{ secrets.GCP_CREDENTIALS }}' | jq -r '.client_email')" >> $GITHUB_OUTPUT
+          echo "project_id=$(echo '${{ steps.extract-email.outputs.project_id')" >> $GITHUB_OUTPUT
+
+      - name: Download Production Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-prod
+          path: terraform/environments/prod
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Apply Production
+        run: terraform apply -auto-approve "tfplan-prod"

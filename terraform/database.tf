@@ -7,8 +7,8 @@ resource "google_sql_database_instance" "votes_db_dev" {
   region           = var.region
 
   settings {
-    tier = "db-f1-micro" # Smallest tier for development
-    activation_policy = "NEVER" # Keep stopped to minimize costs
+    tier              = "db-f1-micro" # Smallest tier for development
+    activation_policy = "NEVER"       # Keep stopped to minimize costs
 
     ip_configuration {
       ipv4_enabled    = false
@@ -16,8 +16,8 @@ resource "google_sql_database_instance" "votes_db_dev" {
     }
 
     backup_configuration {
-      enabled                        = true
-      start_time                     = "02:00" # UTC time
+      enabled    = true
+      start_time = "02:00" # UTC time
       backup_retention_settings {
         retained_backups = 2 # Minimal backup retention for cost savings
         retention_unit   = "COUNT"
@@ -41,8 +41,8 @@ resource "google_sql_database_instance" "votes_db_prod" {
   region           = var.region
 
   settings {
-    tier = "db-f1-micro" # Changed from db-g1-small to reduce costs significantly
-    activation_policy = "NEVER" # Keep stopped to minimize costs
+    tier              = "db-f1-micro" # Changed from db-g1-small to reduce costs significantly
+    activation_policy = "NEVER"       # Keep stopped to minimize costs
 
     ip_configuration {
       ipv4_enabled    = false
@@ -50,8 +50,8 @@ resource "google_sql_database_instance" "votes_db_prod" {
     }
 
     backup_configuration {
-      enabled                        = true
-      start_time                     = "01:00" # UTC time
+      enabled    = true
+      start_time = "01:00" # UTC time
       backup_retention_settings {
         retained_backups = 2 # Minimal backup retention for cost savings
         retention_unit   = "COUNT"

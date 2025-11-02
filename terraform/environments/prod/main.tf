@@ -25,6 +25,7 @@ module "database" {
   region      = var.region
   environment = "prod"
   db_tier     = var.db_tier
+  db_password = var.db_password
   network_id  = module.networking.vpc_id
   backup_time = var.cloud_sql_backup_time
 }

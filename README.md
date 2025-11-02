@@ -1,8 +1,16 @@
 # SecureVote: Cloud Engineering Portfolio Project
 
-> **🎯 Project Goal:** Demonstrate hands-on cloud engineering expertise to secure a Cloud Engineer role in Qatar
+> **🌙 STATUS: PROJECT HIBERNATED - $0/month costs** | See [HIBERNATION.md](HIBERNATION.md) for details
+
+> **� Project Goal:** Demonstrate hands-on cloud engineering expertise to secure a Cloud Engineer role in Qatar
 
 A comprehensive, production-ready secure voting platform built on **Google Cloud Platform** using **Infrastructure as Code (Terraform)** and modern cloud-native architectures. This project showcases my journey from cloud beginner to implementing enterprise-grade solutions.
+
+## 🌙 Hibernation Mode
+
+This project has been placed in **hibernation mode** to optimize costs while preserving all code, infrastructure-as-code, and data backups. All billable GCP resources (Cloud SQL, Cloud Run, VPC connectors) have been destroyed, reducing monthly costs to **$0**.
+
+**To restore the project**, see restoration instructions in [HIBERNATION.md](HIBERNATION.md).
 
 ## 🚀 **Why This Project Demonstrates Cloud Engineering Excellence**
 
